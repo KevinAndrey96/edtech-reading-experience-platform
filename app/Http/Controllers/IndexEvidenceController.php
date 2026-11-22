@@ -2,18 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Book;
-use App\Models\Evidence;
-use Illuminate\Http\Request;
-
+use Illuminate\View\View;
 
 class IndexEvidenceController extends Controller
 {
-    public function index()
-    {
-        $books = Book::all();
-        $evidences = Evidence::all();
+    protected EvidenceController $evidenceController;
 
-        return view('evidences.index', compact('evidences', 'books'));
+    public function __construct(EvidenceController $evidenceController)
+    {
+        $this->evidenceController = $evidenceController;
+    }
+
+    /**
+     * Display a listing of evidences.
+     *
+     * @return View
+     */
+    public function index(): View
+    {
+        return $this->evidenceController->index();
     }
 }

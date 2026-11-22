@@ -3,97 +3,125 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\View\View;
 
 class UserController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of system users.
      *
-     * @return \Illuminate\Http\Response
+     * @return View
      */
-    public function index()
+    public function index(): View
     {
-        $users = User::all();
+        $users = User::withCount(['experiences', 'evidences'])->latest()->get();
+
         return view('users.index', compact('users'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new user.
      *
-     * @return \Illuminate\Http\Response
+     * @return View
      */
-    public function create()
+    public function create(): View
     {
-        $users = User::all();
         return view('users.create');
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created user in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-
-
-        User::create($request->only('name', 'user', 'email', 'role')
-        +[
-            'password' => bcrypt($request->input('password')),
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'role' => 'required|string|in:admin,teacher,student,coordinator',
+            'password' => 'required|string|min:6',
         ]);
 
-        // Resto de la lógica...
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'role' => $validated['role'],
+            'password' => Hash::make($validated['password']),
+        ]);
 
-        return redirect()->route('users.index');
+        return redirect()->route('users.index')->with('success', 'Usuario registrado exitosamente.');
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified user.
      *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @param User $user
+     * @return View
      */
-    public function show(User $user)
+    public function show(User $user): View
     {
+        $user->load(['experiences.book', 'evidences.book']);
+
         return view('users.show', compact('user'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified user.
      *
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @param User $user
+     * @return View
      */
-    public function edit(User $user)
+    public function edit(User $user): View
     {
         return view('users.edit', compact('user'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified user in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param User $user
+     * @return RedirectResponse
      */
-    public function update(Request $request, User $user)
+    public function update(Request $request, User $user): RedirectResponse
     {
-        $user->update($request->all());
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'role' => 'required|string|in:admin,teacher,student,coordinator',
+            'password' => 'nullable|string|min:6',
+        ]);
 
-        return redirect()->route('users.index');
+        $user->name = $validated['name'];
+        $user->email = $validated['email'];
+        $user->role = $validated['role'];
+
+        if (!empty($validated['password'])) {
+            $user->password = Hash::make($validated['password']);
+        }
+
+        $user->save();
+
+        return redirect()->route('users.index')->with('success', 'Usuario actualizado exitosamente.');
     }
 
-    public function destroy(User $user)
-{
-    // Eliminar las experiencias relacionadas
-    $user->experiences()->delete();
+    /**
+     * Remove the specified user from storage.
+     *
+     * @param User $user
+     * @return RedirectResponse
+     */
+    public function destroy(User $user): RedirectResponse
+    {
+        $user->experiences()->delete();
+        $user->evidences()->delete();
+        $user->delete();
 
-    // Eliminar al usuario
-    $user->delete();
-
-    return redirect()->route('users.index');
-}
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado exitosamente.');
+    }
 }

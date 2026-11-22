@@ -1,7 +1,7 @@
 {
-    "name": "laravel/laravel",
+    "name": "kevinandrey/edtech-reading-experience-platform",
     "type": "project",
-    "description": "The Laravel Framework.",
+    "description": "EdTech multimedia reading experience platform connecting Colombian cultural literature, Spotify podcasts, YouTube educational videos, and teacher pedagogical reflections.",
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {

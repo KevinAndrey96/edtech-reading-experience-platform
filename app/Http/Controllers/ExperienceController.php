@@ -2,105 +2,137 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Models\Book;
 use App\Models\Experience;
 use App\Models\User;
-use App\Models\Book;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class ExperienceController extends Controller
 {
-
-
-    public function index()
+    /**
+     * Display a listing of pedagogical reading experiences.
+     *
+     * @return View
+     */
+    public function index(): View
     {
-        $experiences = Experience::with('book', 'user')->get();
+        $experiences = Experience::with(['book', 'user'])->latest()->get();
         $users = User::all();
-        $books = Book::all();  // Recupera todos los usuarios
-        return view('experiences.index', compact('experiences', 'users','books'));
-    
+        $books = Book::orderBy('name')->get();
+
+        return view('experiences.index', compact('experiences', 'users', 'books'));
     }
 
-    public function create()
+    /**
+     * Show the form for creating a new experience.
+     *
+     * @return View
+     */
+    public function create(): View
     {
         $users = User::all();
-        $books = Book::all();
+        $books = Book::orderBy('name')->get();
+
         return view('experiences.create', compact('users', 'books'));
     }
 
-    public function store(Request $request)
+    /**
+     * Store a newly created experience in storage.
+     *
+     * @param Request $request
+     * @return RedirectResponse
+     */
+    public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'content' => 'required',
+            'content' => 'required|string',
             'book_id' => 'required|exists:books,id',
         ]);
 
         $experience = new Experience();
         $experience->content = $request->input('content');
-        $experience->user_id = auth()->user()->id;
-        $experience->book_id = $request->input('book_id');
+        $experience->user_id = Auth::id();
+        $experience->book_id = (int) $request->input('book_id');
         $experience->save();
 
-        return redirect()->route('experiences.index');
+        return redirect()->route('experiences.index')->with('success', 'Experiencia pedagógica compartida exitosamente.');
     }
 
-    public function edit(Experience $experience)
+    /**
+     * Show the form for editing the specified experience.
+     *
+     * @param Experience $experience
+     * @return View
+     */
+    public function edit(Experience $experience): View
     {
-        // Verifica que el usuario logado sea el propietario de la experiencia
-        if (auth()->user()->id !== $experience->user_id) {
-            abort(403); // Acceso no autorizado
+        // Check ownership or admin privilege
+        if (Auth::id() !== $experience->user_id && !Auth::user()->isAdmin()) {
+            abort(403, 'Acceso no autorizado para editar esta experiencia.');
         }
 
         $users = User::all();
-        $books = Book::all();
+        $books = Book::orderBy('name')->get();
+
         return view('experiences.edit', compact('experience', 'users', 'books'));
     }
 
-    public function update(Request $request, Experience $experience)
+    /**
+     * Update the specified experience in storage.
+     *
+     * @param Request $request
+     * @param Experience $experience
+     * @return RedirectResponse
+     */
+    public function update(Request $request, Experience $experience): RedirectResponse
     {
-        // Verifica que el usuario logado sea el propietario de la experiencia
-        if (auth()->user()->id !== $experience->user_id) {
-            abort(403); // Acceso no autorizado
+        if (Auth::id() !== $experience->user_id && !Auth::user()->isAdmin()) {
+            abort(403, 'Acceso no autorizado para modificar esta experiencia.');
         }
 
         $request->validate([
-            'content' => 'required',
-            'user_id' => 'required|exists:users,id',
+            'content' => 'required|string',
             'book_id' => 'required|exists:books,id',
         ]);
 
         $experience->content = $request->input('content');
-        $experience->user_id = $request->input('user_id');
-        $experience->book_id = $request->input('book_id');
+        $experience->book_id = (int) $request->input('book_id');
         $experience->save();
 
-        return redirect()->route('experiences.index');
-    }
-
-    public function destroy(Experience $experience)
-    {
-        // Verifica que el usuario logado sea el propietario de la experiencia
-        if (auth()->user()->id !== $experience->user_id) {
-            abort(403); // Acceso no autorizado
-        }
-
-        $experience->delete();
-        return redirect()->route('experiences.index');
+        return redirect()->route('experiences.index')->with('success', 'Experiencia pedagógica actualizada.');
     }
 
     /**
-     * Display the specified resource.
+     * Remove the specified experience from storage.
      *
-     * @param  \App\Models\Book  $book
-     * @return \Illuminate\Http\Response
+     * @param Experience $experience
+     * @return RedirectResponse
      */
-    public function show($id)
+    public function destroy(Experience $experience): RedirectResponse
     {
-        $experiences = Experience::with('book', 'user')->get();
-        $users = User::all();
-        $books = Book::all(); 
-        $book = Book::findOrFail($id);
+        if (Auth::id() !== $experience->user_id && !Auth::user()->isAdmin()) {
+            abort(403, 'Acceso no autorizado para eliminar esta experiencia.');
+        }
+
+        $experience->delete();
+
+        return redirect()->route('experiences.index')->with('success', 'Experiencia eliminada exitosamente.');
+    }
+
+    /**
+     * Display experiences associated with a specific book.
+     *
+     * @param int|string $id
+     * @return View
+     */
+    public function show(int|string $id): View
+    {
+        $book = Book::with(['experiences.user', 'region'])->findOrFail($id);
         $experiences = $book->experiences;
+
         return view('experiences.show', compact('book', 'experiences'));
     }
 }

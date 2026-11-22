@@ -4,112 +4,109 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\Region;
-use App\Models\Evidence;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class RegionController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of geographical and cultural regions.
      *
-     * @return \Illuminate\Http\Response
+     * @return View
      */
-
-    public function index()
+    public function index(): View
     {
-
-        $regions = Region::all();
+        $regions = Region::withCount('books')->orderBy('name')->get();
         $books = Book::all();
-        return view('regions.index',compact('regions', 'books'));
+
+        return view('regions.index', compact('regions', 'books'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new region.
      *
-     * @return \Illuminate\Http\Response
+     * @return View
      */
-    public function create()
+    public function create(): View
     {
-        $regions = Region::all();
+        $regions = Region::orderBy('name')->get();
 
-        return view('regions.create',compact('regions'));
+        return view('regions.create', compact('regions'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created region in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @return RedirectResponse
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        $region = Region::create($request->all());
-        return redirect()->route('regions.index');
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'blog_url' => 'nullable|url|max:500',
+        ]);
 
+        Region::create($validated);
+
+        return redirect()->route('regions.index')->with('success', 'Región registrada exitosamente.');
     }
 
     /**
-     * Display the specified resource.
+     * Display the specified region and its associated books.
      *
-     * @param  \App\Models\region  $region
-     * @return \Illuminate\Http\Response
+     * @param int|string $regionID
+     * @return View
      */
-
-
-   /* public function show($id)
+    public function show(int|string $regionID): View
     {
-        $region = Region::findOrFail($id);
-        $books = $region->books;
+        $region = Region::findOrFail($regionID);
+        $books = Book::where('region_id', $regionID)->with('region')->get();
 
-        return view('regions.show', compact('region', 'books'));
-
-        
-    }*/
-    public function show($regionID)
-    {
-        $books = Book::where("region_id", $regionID)->get();
-        $region = Region::find($regionID);
         return view('regions.show', compact('books', 'region'));
     }
-    
+
     /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing the specified region.
      *
-     * @param  \App\Models\region  $region
-     * @return \Illuminate\Http\Response
+     * @param Region $region
+     * @return View
      */
-    public function edit(Region $region)
+    public function edit(Region $region): View
     {
-        return view('regions.edit',compact('region'));
-
+        return view('regions.edit', compact('region'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update the specified region in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\region  $region
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param Region $region
+     * @return RedirectResponse
      */
-    public function update(Request $request, Region $region){
+    public function update(Request $request, Region $region): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'blog_url' => 'nullable|url|max:500',
+        ]);
 
+        $region->update($validated);
 
-
-        $region->update($request->all());
-
-        return redirect()->route('regions.index');
+        return redirect()->route('regions.index')->with('success', 'Región actualizada exitosamente.');
     }
 
-
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified region from storage.
      *
-     * @param  \App\Models\region  $region
-     * @return \Illuminate\Http\Response
+     * @param Region $region
+     * @return RedirectResponse
      */
-    public function destroy(Region $region)
+    public function destroy(Region $region): RedirectResponse
     {
         $region->delete();
-        return redirect()->route('regions.index');
+
+        return redirect()->route('regions.index')->with('success', 'Región eliminada.');
     }
 }

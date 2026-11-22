@@ -1,97 +1,54 @@
 <?php
 
-
-
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\RegionController;
+use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\CreateEvidenceController;
+use App\Http\Controllers\EvidenceController;
 use App\Http\Controllers\ExperienceController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\EvidenceController;
-use App\Http\Controllers\CreateEvidenceController;
-use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\RegionController;
+use App\Http\Controllers\StoreEvidenceController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
-
-
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
 
 Route::get('/', [HomeController::class, 'show'])->name('welcome');
 
-
-Route::middleware('auth')->group(function () {
-    // Rutas protegidas aquí
-    Route::get('/experiences', 'ExperienceController@index')->name('experiences.index');
-    
-});
-
 Auth::routes();
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
 
-Route::resource('home',HomeController::class)->names('home')->middleware('auth');
-Route::resource('users',UserController::class)->names('users')->middleware('auth');;
-Route::resource('regions',RegionController::class)->names('regions');
-Route::get('/regions', [RegionController::class, 'index'])->name('regions.index')->middleware('auth');
-Route::get('/regions/create', [RegionController::class, 'create'])->name('regions.create')->middleware('auth');
-Route::get('/regions/edit', [RegionController::class,   'edit'])->name('regions.edit2')->middleware('auth');
+Route::middleware('auth')->group(function () {
+    // Dashboard & Home
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-Route::get('/regions/show/{regionID}', [RegionController::class, 'show'])->name('regions.show1');
+    // Users Management
+    Route::resource('users', UserController::class);
 
-Route::get('/books', [BookController::class, 'index'])->name('books.index')->middleware('auth');
+    // Regions Management
+    Route::resource('regions', RegionController::class);
+    Route::get('/regions/show/{regionID}', [RegionController::class, 'show'])->name('regions.show1');
 
+    // Books & Reading Catalog
+    Route::get('/books/region/{regionID}', [BookController::class, 'booksByRegionID'])->name('books.by-region');
+    Route::get('/books/evidences/{bookID}', [BookController::class, 'evidencesByBookID'])->name('books.evidences');
+    Route::resource('books', BookController::class);
 
+    // Pedagogical Experiences
+    Route::resource('experiences', ExperienceController::class);
 
-Route::get('/books/region/{regionID}', [BookController::class, 'booksByRegionID'])->middleware('auth');// foro
-Route::get('/books/evidences/{bookID}', [BookController::class, 'evidencesByBookID'])->middleware('auth');// evidencias
-//tablas compuestas en laravel (llaves foraneas de una  muchos)
-Route::get('/books/create', [BookController::class, 'create'])->name('books.create')->middleware('auth');
-Route::post('/books', [BookController::class, 'store'])->name('books.store')->middleware('auth');
+    // Student Learning Evidences
+    Route::get('/evidences/region/{regionID}', [EvidenceController::class, 'evidencesByRegionID'])->name('evidences.by-region');
+    Route::get('/evidences-create/book/{bookID}', [EvidenceController::class, 'evidencesByBookID'])->name('evidences.by-book');
+    Route::resource('evidences', EvidenceController::class);
 
-Route::get('/books/{book}/edit', [BookController::class, 'edit'])->name('books.edit')->middleware('auth');
-Route::put('books/{id}', [BookController::class, 'update'])->name('books.update');
-//Route::put('/books/{book}', [BookController::class, 'update'])->name('books.update')->middleware('auth');
-Route::delete('/books/{book}', [BookController::class, 'destroy'])->name('books.destroy')->middleware('auth');
-
-
-Route::resource('experiences',ExperienceController::class)->names('experiences')->middleware('auth');
-//Route::get('/regions/{id}', 'RegionController@show')->name('regions.show');
-Route::post('/evidence-store', [StoreEvidenceController::class, 'store'])->name('evidence.store')->middleware('auth');
-
-Route::get('/evidences/{id}', [EvidenceController::class, 'show'])->name('evidences.show');
-//Route::get('/evidences/{id}', [EvidencesController::class, 'show'])->name('evidences.show');
-
-Route::get('/evidences', [evidenceController::class, 'index'])->name('evidences.index')->middleware('auth');
-Route::get('/evidences/create', [App\Http\Controllers\CreateEvidenceController::class, 'create'])->name('evidences.create');
-Route::get('/evidences/region/{regionID}', [evidenceController::class, 'evidencesByRegionID'])->middleware('auth');
-Route::get('/evidences-create/book/{bookID}', [EvidenceController::class, 'evidencesByBookID'])->middleware('auth');
-
-
-Route::post('/evidences-store', [App\Http\Controllers\StoreEvidenceController::class, 'store'])->name('evidences.store');
-Route::get('/evidences/{evidence}/edit', [evidenceController::class, 'edit'])->name('evidences.edit')->middleware('auth');
-
-Route::delete('/evidences/{evidence}', [evidenceController::class, 'destroy'])->name('evidences.destroy')->middleware('auth');
-
-
-Route::get('/evidence-create', [App\Http\Controllers\CreateEvidenceController::class, 'create']);
-
-Route::get('/evidences', [App\Http\Controllers\IndexEvidenceController::class, 'index'])->middleware('auth');
-
-
-
-
-
-
-
-
-
-
+    // Legacy and helper aliases for evidence submission forms
+    Route::post('/evidence-store', [StoreEvidenceController::class, 'store'])->name('evidence.store');
+    Route::post('/evidences-store', [StoreEvidenceController::class, 'store'])->name('evidences.store.alt');
+    Route::get('/evidence-create', [CreateEvidenceController::class, 'create'])->name('evidence.create.alt');
+});
