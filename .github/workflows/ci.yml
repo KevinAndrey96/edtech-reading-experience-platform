@@ -1,138 +1,107 @@
-name: CI Pipeline
+name: CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [main]
   pull_request:
-    branches: [ master, main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  php-lint:
-    name: PHP Syntax & Lint (${{ matrix.php-version }})
+  quality:
+    name: Pint y PHPUnit (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        php-version: ['8.0', '8.1', '8.2']
-
+        php: ['8.1', '8.2']
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup PHP Environment
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
-          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, bcmath, zip
+          php-version: ${{ matrix.php }}
+          extensions: mbstring, xml, ctype, intl, pdo_sqlite, pdo_mysql, bcmath, zip, gd, fileinfo
           coverage: none
 
-      - name: Validate Composer Configuration
-        run: composer validate --no-check-all --no-check-lock
+      - run: composer validate --strict --no-check-publish
 
-      - name: Syntax Linting (app, routes, config)
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Preparar entorno
         run: |
-          echo "Linting routes..."
-          php -l routes/api.php
-          php -l routes/web.php
-          php -l routes/console.php
-          php -l routes/channels.php
-          
-          echo "Linting config files..."
-          find config -name "*.php" -exec php -l {} \;
-          
-          echo "Linting application classes..."
-          find app -name "*.php" -exec php -l {} \;
+          cp .env.example .env
+          php artisan key:generate
 
-  database-validation:
-    name: Database Schema & Seeds Verification (MySQL 8.0)
+      - run: vendor/bin/pint --test
+
+      - run: php artisan test
+
+  database:
+    name: Esquema, semillas y migraciones en MySQL 8.0
     runs-on: ubuntu-latest
-
     services:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: root_secret_password
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: edtech_reading_platform
-          MYSQL_USER: edtech_user
-          MYSQL_PASSWORD: edtech_secret
         ports:
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=5s --health-retries=5
-
+        options: --health-cmd="mysqladmin ping" --health-interval=5s --health-timeout=5s --health-retries=10
+    env:
+      MYSQL: mysql -h 127.0.0.1 -u root -proot
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Wait for MySQL
+      - name: Cargar schema.sql y seeds.sql
         run: |
-          while ! mysqladmin ping -h 127.0.0.1 -u root -proot_secret_password --silent; do
-            echo "Waiting for MySQL to be ready..."
-            sleep 2
-          done
+          $MYSQL edtech_reading_platform < database/schema.sql
+          $MYSQL edtech_reading_platform < database/seeds.sql
 
-      - name: Apply Database DDL Schema
+      - name: Verificar el catálogo sembrado
         run: |
-          echo "Importing database/schema.sql..."
-          mysql -h 127.0.0.1 -u edtech_user -pedtech_secret edtech_reading_platform < database/schema.sql
-          echo "Schema import successful!"
+          count() { $MYSQL -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM $1"; }
+          test "$(count regions)" -ge 10
+          test "$(count books)" -ge 30
+          test "$(count users)" -ge 6
+          test "$(count experiences)" -ge 6
+          test "$(count evidence)" -ge 6
 
-      - name: Apply Database Seeds
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, xml, intl, pdo_mysql, bcmath, zip
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Ejecutar las migraciones en una base vacía
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: edtech_migrations
+          DB_USERNAME: root
+          DB_PASSWORD: root
         run: |
-          echo "Importing database/seeds.sql..."
-          mysql -h 127.0.0.1 -u edtech_user -pedtech_secret edtech_reading_platform < database/seeds.sql
-          echo "Seeds import successful!"
+          $MYSQL -e "CREATE DATABASE edtech_migrations"
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force
 
-      - name: Verify Seed Integrity & Record Counts
-        run: |
-          mysql -h 127.0.0.1 -u edtech_user -pedtech_secret edtech_reading_platform -e "
-            SELECT 'Regions count' AS metric, COUNT(*) AS count FROM regions;
-            SELECT 'Books count' AS metric, COUNT(*) AS count FROM books;
-            SELECT 'Users count' AS metric, COUNT(*) AS count FROM users;
-            SELECT 'Experiences count' AS metric, COUNT(*) AS count FROM experiences;
-            SELECT 'Evidence count' AS metric, COUNT(*) AS count FROM evidence;
-          "
-          
-          # Assert minimum record thresholds
-          REGIONS_COUNT=$(mysql -h 127.0.0.1 -u edtech_user -pedtech_secret -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM regions;")
-          BOOKS_COUNT=$(mysql -h 127.0.0.1 -u edtech_user -pedtech_secret -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM books;")
-          USERS_COUNT=$(mysql -h 127.0.0.1 -u edtech_user -pedtech_secret -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM users;")
-          EXP_COUNT=$(mysql -h 127.0.0.1 -u edtech_user -pedtech_secret -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM experiences;")
-          EVID_COUNT=$(mysql -h 127.0.0.1 -u edtech_user -pedtech_secret -N -s edtech_reading_platform -e "SELECT COUNT(*) FROM evidence;")
-          
-          if [ "$REGIONS_COUNT" -lt 10 ]; then
-            echo "ERROR: Expected at least 10 regions, found $REGIONS_COUNT"
-            exit 1
-          fi
-          
-          if [ "$BOOKS_COUNT" -lt 30 ]; then
-            echo "ERROR: Expected at least 30 books, found $BOOKS_COUNT"
-            exit 1
-          fi
-          
-          if [ "$USERS_COUNT" -lt 6 ]; then
-            echo "ERROR: Expected at least 6 users, found $USERS_COUNT"
-            exit 1
-          fi
-          
-          if [ "$EXP_COUNT" -lt 6 ]; then
-            echo "ERROR: Expected at least 6 experiences, found $EXP_COUNT"
-            exit 1
-          fi
-          
-          if [ "$EVID_COUNT" -lt 6 ]; then
-            echo "ERROR: Expected at least 6 evidences, found $EVID_COUNT"
-            exit 1
-          fi
-          
-          echo "All database verification assertions passed successfully!"
-
-  docker-validation:
-    name: Docker Compose Specification Validation
+  docker:
+    name: Imagen Docker y Compose
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Validate Docker Compose Config
-        run: docker compose config
+      - run: docker compose config --quiet
+
+      - run: docker build -f docker/php/Dockerfile -t edtech-reading-platform .

@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Class Experience
  *
- * @package App\Models
  * @property int $id
  * @property int $user_id
  * @property int $book_id
@@ -42,9 +41,15 @@ class Experience extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'user_id' => 'integer',
+        'book_id' => 'integer',
+    ];
+
+    /**
      * Teacher or author of the pedagogical experience.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -53,8 +58,6 @@ class Experience extends Model
 
     /**
      * Literary work referenced by this experience.
-     *
-     * @return BelongsTo
      */
     public function book(): BelongsTo
     {

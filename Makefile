@@ -2,7 +2,7 @@
 # EdTech Reading Experience Platform - Makefile
 # ==============================================================================
 
-.PHONY: help build up down restart logs sh reset-db seed lint test key
+.PHONY: help build up down restart logs sh reset-db seed install lint test key
 
 help: ## Show this help message
 	@echo "Available commands:"
@@ -29,15 +29,16 @@ key: ## Generate application key
 	docker compose exec app php artisan key:generate
 
 reset-db: ## Wipe and recreate database from schema.sql
-	docker compose exec database mysql -u edtech_user -pedtech_secret edtech_reading_platform < database/schema.sql
+	docker compose exec -T database mysql -u edtech_user -pedtech_secret edtech_reading_platform < database/schema.sql
 
 seed: ## Populate database with Colombian regional reading seeds
-	docker compose exec database mysql -u edtech_user -pedtech_secret edtech_reading_platform < database/seeds.sql
+	docker compose exec -T database mysql -u edtech_user -pedtech_secret edtech_reading_platform < database/seeds.sql
 
-lint: ## Run PHP syntax check across app, routes and config
-	php -l routes/api.php
-	php -l routes/web.php
-	find app -name "*.php" -exec php -l {} \;
+install: ## Install Composer dependencies inside the app container
+	docker compose exec app composer install
 
-test: ## Run PHPUnit tests
-	docker compose exec app ./vendor/bin/phpunit
+lint: ## Check code style with Laravel Pint
+	docker compose exec app ./vendor/bin/pint --test
+
+test: ## Run the PHPUnit suite
+	docker compose exec app php artisan test

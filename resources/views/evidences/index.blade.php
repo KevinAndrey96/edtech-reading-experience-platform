@@ -45,7 +45,7 @@
   
                                               <div class="d-flex flex-column justify-content-center">
   
-                                                  <a href="/books/evidences/{{$book->id}}  style="font-size: 16px; padding: 5px 25px;" class="btn btn-warning mx-2" value="editar" href="">Evidencias</a>
+                                                  <a href="{{ route('books.evidences', $book->id) }}" style="font-size: 16px; padding: 5px 25px;" class="btn btn-warning mx-2">Evidencias</a>
   
                                               </div>
                                           </div>

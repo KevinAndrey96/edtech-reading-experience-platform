@@ -2,37 +2,30 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Book;
 use App\Models\Region;
-use App\Models\User;
-use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\View\View;
 
 class HomeController extends Controller
 {
     /**
-     * Create a new controller instance.
-     *
-     * @return void
-    
-    public function __construct()
-    {
-        $this->middleware('auth');
-    }
+     * Send administrators to the dashboard and teachers to the interactive map.
      */
+    public function index(): RedirectResponse
+    {
+        return Auth::user()->isAdmin()
+            ? redirect()->route('users.index')
+            : redirect()->route('welcome');
+    }
 
     /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * Show the interactive map of Colombian regions.
      */
-    public function index()
-    {
-        $users = User::all();
-        return view('users.index',compact('users'));
-    }
-    public function show()
+    public function show(): View
     {
         $region = Region::all();
+
         return view('welcome', compact('region'));
     }
 }

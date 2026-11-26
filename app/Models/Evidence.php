@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Class Evidence
  *
- * @package App\Models
  * @property int $id
  * @property int $user_id
  * @property int|null $book_id
@@ -46,9 +45,15 @@ class Evidence extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'user_id' => 'integer',
+        'book_id' => 'integer',
+    ];
+
+    /**
      * Teacher registering the evidence.
-     *
-     * @return BelongsTo
      */
     public function user(): BelongsTo
     {
@@ -57,8 +62,6 @@ class Evidence extends Model
 
     /**
      * Book connected to the evidence.
-     *
-     * @return BelongsTo
      */
     public function book(): BelongsTo
     {

@@ -1,9 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class DeleteBooksTable extends Migration
 {
@@ -12,22 +10,17 @@ class DeleteBooksTable extends Migration
      *
      * @return void
      */
-
-     public function up()
-     {
-         DB::statement('SET FOREIGN_KEY_CHECKS = 0;');
-         Schema::dropIfExists('books');
-         DB::statement('SET FOREIGN_KEY_CHECKS = 1;');
-     }
+    public function up()
+    {
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists('books');
+        Schema::enableForeignKeyConstraints();
+    }
 
     /**
      * Reverse the migrations.
      *
      * @return void
      */
-    public function down()
-    {
-       
-    }
+    public function down() {}
 }
-

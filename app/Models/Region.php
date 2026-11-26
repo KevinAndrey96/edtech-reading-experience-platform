@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class Region
  *
- * @package App\Models
  * @property int $id
  * @property string $name
  * @property string|null $blog_url
@@ -40,8 +39,6 @@ class Region extends Model
 
     /**
      * Books belonging to this cultural and geographical region.
-     *
-     * @return HasMany
      */
     public function books(): HasMany
     {

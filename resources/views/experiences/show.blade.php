@@ -1,7 +1,6 @@
 @extends('layouts.dashboard')
-<br>
-<br>
-@section('content')
+
+@section('navbar')
 
 <div style="margin-left: 30%">
         
@@ -11,6 +10,7 @@
       <p class="mx-5" style="align: justify;">¡Bienvenido al fascinante mundo de los libros regionales de Colombia! Este espacio está diseñado para que profesores como tú compartan sus conocimientos y experiencias sobre la riqueza literaria de nuestras diferentes regiones.</p>
       <form action="{{ route('experiences.store') }}" method="POST">
           @csrf
+          <input type="hidden" name="book_id" value="{{ $book->id }}">
           <textarea class="form-control" placeholder=" ¡Exprésate y déjanos tu sabiduría en este foro de palabras que enriquecerá nuestras aulas y mentes con historias colombianas inolvidables!" style=" max-width: 70%; margin-left:5%; border: 2px solid blue;" name="content" id="content" rows="4"></textarea>
           <button class="btn btn-warning m-5" type="submit">Comentar</button>
       </form>
@@ -55,3 +55,4 @@
 
     @endforeach
 </div>
+@endsection

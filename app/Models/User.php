@@ -11,7 +11,6 @@ use Laravel\Sanctum\HasApiTokens;
 /**
  * Class User
  *
- * @package App\Models
  * @property int $id
  * @property string $name
  * @property string $email
@@ -61,8 +60,6 @@ class User extends Authenticatable
 
     /**
      * Experiences authored by the user.
-     *
-     * @return HasMany
      */
     public function experiences(): HasMany
     {
@@ -71,8 +68,6 @@ class User extends Authenticatable
 
     /**
      * Evidences submitted by the user.
-     *
-     * @return HasMany
      */
     public function evidences(): HasMany
     {
@@ -81,8 +76,6 @@ class User extends Authenticatable
 
     /**
      * Determine if user has administrator privileges.
-     *
-     * @return bool
      */
     public function isAdmin(): bool
     {
@@ -91,8 +84,6 @@ class User extends Authenticatable
 
     /**
      * Determine if user is a teacher.
-     *
-     * @return bool
      */
     public function isTeacher(): bool
     {

@@ -13,6 +13,27 @@ use Illuminate\View\View;
 
 class BookController extends Controller
 {
+    private const IMAGE_RULE = 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:10240';
+
+    private const MEDIA_FIELDS = ['front_page', 'eye_image', 'diamond_image', 'message_image', 'pencil_audio'];
+
+    private const RULES = [
+        'region_id' => 'required|exists:regions,id',
+        'name' => 'nullable|string|max:255',
+        'planet_image' => 'nullable|string|max:500',
+        'circle_audio' => 'nullable|string|max:500',
+        'tv_video' => 'nullable|string|max:500',
+        'face_video' => 'nullable|string|max:500',
+        'message_text' => 'nullable|string',
+        'message_tex' => 'nullable|string',
+        'diamond_text' => 'nullable|string',
+        'front_page' => self::IMAGE_RULE,
+        'eye_image' => self::IMAGE_RULE,
+        'diamond_image' => self::IMAGE_RULE,
+        'message_image' => self::IMAGE_RULE,
+        'pencil_audio' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:10240',
+    ];
+
     protected MediaUploadService $mediaUploadService;
 
     public function __construct(MediaUploadService $mediaUploadService)
@@ -22,8 +43,6 @@ class BookController extends Controller
 
     /**
      * Display a listing of books.
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -35,8 +54,6 @@ class BookController extends Controller
 
     /**
      * Show the form for creating a new book.
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -47,30 +64,12 @@ class BookController extends Controller
 
     /**
      * Store a newly created book in storage.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
-            'region_id' => 'required|exists:regions,id',
-            'name' => 'nullable|string|max:255',
-            'planet_image' => 'nullable|string|max:500',
-            'circle_audio' => 'nullable|string|max:500',
-            'tv_video' => 'nullable|string|max:500',
-            'face_video' => 'nullable|string|max:500',
-            'message_text' => 'nullable|string',
-            'message_tex' => 'nullable|string',
-            'diamond_text' => 'nullable|string',
-            'front_page' => 'nullable|file|max:10240',
-            'eye_image' => 'nullable|file|max:10240',
-            'diamond_image' => 'nullable|file|max:10240',
-            'message_image' => 'nullable|file|max:10240',
-            'pencil_audio' => 'nullable|file|max:10240',
-        ]);
+        $request->validate(self::RULES);
 
-        $book = new Book();
+        $book = new Book;
         $book->region_id = (int) $request->input('region_id');
         $book->name = $request->input('name', '');
         $book->planet_image = $request->input('planet_image', '');
@@ -86,24 +85,7 @@ class BookController extends Controller
         $book->pencil_audio = '';
         $book->save();
 
-        // Process media uploads
-        $mediaFields = [
-            'front_page' => 'front_page',
-            'eye_image' => 'eye_image',
-            'diamond_image' => 'diamond_image',
-            'message_image' => 'message_image',
-            'pencil_audio' => 'pencil_audio',
-        ];
-
-        foreach ($mediaFields as $inputKey => $folder) {
-            if ($request->hasFile($inputKey)) {
-                $book->{$inputKey} = $this->mediaUploadService->upload(
-                    $request->file($inputKey),
-                    $folder,
-                    $book->id
-                );
-            }
-        }
+        $this->storeMedia($request, $book);
 
         $book->save();
 
@@ -112,22 +94,14 @@ class BookController extends Controller
 
     /**
      * Display the specified book.
-     *
-     * @param Book $book
-     * @return View
      */
-    public function show(Book $book): View
+    public function show(Book $book): RedirectResponse
     {
-        $book->load(['region', 'experiences.user', 'evidences']);
-
-        return view('books.show', compact('book'));
+        return redirect()->route('regions.show1', $book->region_id);
     }
 
     /**
      * Filter books by geographical region.
-     *
-     * @param int|string $regionID
-     * @return View
      */
     public function booksByRegionID(int|string $regionID): View
     {
@@ -139,9 +113,6 @@ class BookController extends Controller
 
     /**
      * List learning evidences submitted for a specific book.
-     *
-     * @param int|string $bookID
-     * @return View
      */
     public function evidencesByBookID(int|string $bookID): View
     {
@@ -156,9 +127,6 @@ class BookController extends Controller
 
     /**
      * Show the form for editing the specified book.
-     *
-     * @param int|string $id
-     * @return View
      */
     public function edit(int|string $id): View
     {
@@ -170,31 +138,12 @@ class BookController extends Controller
 
     /**
      * Update the specified book in storage.
-     *
-     * @param Request $request
-     * @param int|string $id
-     * @return RedirectResponse
      */
     public function update(Request $request, int|string $id): RedirectResponse
     {
         $book = Book::findOrFail($id);
 
-        $request->validate([
-            'region_id' => 'required|exists:regions,id',
-            'name' => 'nullable|string|max:255',
-            'planet_image' => 'nullable|string|max:500',
-            'circle_audio' => 'nullable|string|max:500',
-            'tv_video' => 'nullable|string|max:500',
-            'face_video' => 'nullable|string|max:500',
-            'message_text' => 'nullable|string',
-            'message_tex' => 'nullable|string',
-            'diamond_text' => 'nullable|string',
-            'front_page' => 'nullable|file|max:10240',
-            'eye_image' => 'nullable|file|max:10240',
-            'diamond_image' => 'nullable|file|max:10240',
-            'message_image' => 'nullable|file|max:10240',
-            'pencil_audio' => 'nullable|file|max:10240',
-        ]);
+        $request->validate(self::RULES);
 
         $book->region_id = (int) $request->input('region_id');
         $book->name = $request->input('name', $book->name);
@@ -210,24 +159,7 @@ class BookController extends Controller
             $book->message_text = $request->input('message_tex');
         }
 
-        // Process media updates
-        $mediaFields = [
-            'front_page' => 'front_page',
-            'eye_image' => 'eye_image',
-            'diamond_image' => 'diamond_image',
-            'message_image' => 'message_image',
-            'pencil_audio' => 'pencil_audio',
-        ];
-
-        foreach ($mediaFields as $inputKey => $folder) {
-            if ($request->hasFile($inputKey)) {
-                $book->{$inputKey} = $this->mediaUploadService->upload(
-                    $request->file($inputKey),
-                    $folder,
-                    $book->id
-                );
-            }
-        }
+        $this->storeMedia($request, $book);
 
         $book->save();
 
@@ -236,9 +168,6 @@ class BookController extends Controller
 
     /**
      * Remove the specified book from storage.
-     *
-     * @param int|string $id
-     * @return RedirectResponse
      */
     public function destroy(int|string $id): RedirectResponse
     {
@@ -250,5 +179,14 @@ class BookController extends Controller
         $book->delete();
 
         return back()->with('success', 'Libro eliminado exitosamente.');
+    }
+
+    private function storeMedia(Request $request, Book $book): void
+    {
+        foreach (self::MEDIA_FIELDS as $field) {
+            if ($request->hasFile($field)) {
+                $book->{$field} = $this->mediaUploadService->upload($request->file($field), $field, $book->id);
+            }
+        }
     }
 }

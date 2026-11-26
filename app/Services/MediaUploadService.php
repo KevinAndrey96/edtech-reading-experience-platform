@@ -22,43 +22,31 @@ class MediaUploadService
 
     /**
      * Upload an asset file to storage and optionally mirror it to an external storage server.
-     *
-     * @param UploadedFile $file
-     * @param string $directory
-     * @param string|int $identifier
-     * @return string
      */
     public function upload(UploadedFile $file, string $directory, string|int $identifier): string
     {
-        $extension = $file->getClientOriginalExtension() ?: 'png';
+        $extension = $file->extension() ?: 'bin';
         $filename = sprintf('%s.%s', $identifier, $extension);
         $relativePath = sprintf('%s/%s', $directory, $filename);
 
-        // Store file locally in public disk
         Storage::disk('public')->putFileAs($directory, $file, $filename);
 
-        // Mirror to remote upload endpoint if configured
-        $remoteUrl = env('UPLOAD_REMOTE_URL');
-        if (!empty($remoteUrl)) {
+        $remoteUrl = config('services.media_mirror.url');
+        if (! empty($remoteUrl)) {
             $this->mirrorToRemote($directory, $relativePath, $remoteUrl);
         }
 
-        return '/storage/' . $relativePath;
+        return '/storage/'.$relativePath;
     }
 
     /**
      * Mirror asset file to remote host.
-     *
-     * @param string $directory
-     * @param string $relativePath
-     * @param string $remoteUrl
-     * @return void
      */
     protected function mirrorToRemote(string $directory, string $relativePath, string $remoteUrl): void
     {
         try {
             $absolutePath = Storage::disk('public')->path($relativePath);
-            if (!file_exists($absolutePath)) {
+            if (! file_exists($absolutePath)) {
                 return;
             }
 
@@ -75,7 +63,7 @@ class MediaUploadService
                 ],
             ]);
         } catch (GuzzleException $e) {
-            Log::warning('Remote media upload mirroring skipped: ' . $e->getMessage());
+            Log::warning('Remote media upload mirroring skipped: '.$e->getMessage());
         }
     }
 }

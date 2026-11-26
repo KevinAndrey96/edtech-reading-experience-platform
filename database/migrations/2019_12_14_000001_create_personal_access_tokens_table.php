@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateBooks2Table extends Migration
+class CreatePersonalAccessTokensTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,21 +13,13 @@ class CreateBooks2Table extends Migration
      */
     public function up()
     {
-        Schema::create('books_2', function (Blueprint $table) {
+        Schema::create('personal_access_tokens', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('region_id');
-            $table->foreign('region_id')->references('id')->on('regions');
-            $table->string('front_page');
-            $table->string('circle_audio');
-            $table->string('pencil_audio');
-            $table->string('planet_image');
-            $table->string('face_video');
-            $table->string('eye_image');
-            $table->string('tv_video');
-            $table->string('message_image');
-            $table->text('message_text');
-            $table->string('diamond_image');
-            $table->text('diamond_text');
+            $table->morphs('tokenable');
+            $table->string('name');
+            $table->string('token', 64)->unique();
+            $table->text('abilities')->nullable();
+            $table->timestamp('last_used_at')->nullable();
             $table->timestamps();
         });
     }
@@ -39,6 +31,6 @@ class CreateBooks2Table extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('books_2');
+        Schema::dropIfExists('personal_access_tokens');
     }
 }

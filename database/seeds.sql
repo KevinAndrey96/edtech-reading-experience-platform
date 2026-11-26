@@ -11,12 +11,12 @@ SET NAMES utf8mb4;
 -- Note: bcrypt hash corresponds to 'password'
 -- ----------------------------------------------------------------------------
 INSERT INTO `users` (`id`, `name`, `email`, `role`, `password`, `email_verified_at`, `created_at`, `updated_at`) VALUES
-(1, 'Administrador General', 'admin@crazybooks.com.co', 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
-(2, 'Profa. Elena Restrepo', 'elena.restrepo@educacion.gov.co', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
-(3, 'Prof. Carlos Mario Benitez', 'carlos.benitez@educacion.gov.co', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
-(4, 'Profa. Marcela Ospina', 'marcela.ospina@educacion.gov.co', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
-(5, 'Prof. Jairo Caicedo', 'jairo.caicedo@educacion.gov.co', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
-(6, 'Lic. Fernando Murillo', 'coordinacion@crazybooks.com.co', 'coordinator', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW());
+(1, 'Administrador General', 'admin@example.com', 'admin', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
+(2, 'Profa. Elena Restrepo', 'elena.restrepo@docentes.example.com', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
+(3, 'Prof. Carlos Mario Benitez', 'carlos.benitez@docentes.example.com', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
+(4, 'Profa. Marcela Ospina', 'marcela.ospina@docentes.example.com', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
+(5, 'Prof. Jairo Caicedo', 'jairo.caicedo@docentes.example.com', 'teacher', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW()),
+(6, 'Lic. Fernando Murillo', 'coordinacion@example.com', 'coordinator', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', NOW(), NOW(), NOW());
 
 -- ----------------------------------------------------------------------------
 -- 2. Regions (10 Colombian Cultural & Geographical Reading Regions)

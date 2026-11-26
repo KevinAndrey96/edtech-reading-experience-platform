@@ -1,20 +1,12 @@
 @extends('layouts.dashboard')
-<br>
-<br>
-@section('content')
-@foreach ($experiences as $experience)
-@endforeach
+
+@section('navbar')
     <div style="margin-left: 30%">
         
     <div class="card mb-3 text-dark bg-white m-2" style="width: 90%; margin: 2%;">
         
-        <h3 class="mx-5" style="margin-top: 10px;"">Foro - {{ $experience->book->name }}</h3>
+        <h3 class="mx-5" style="margin-top: 10px;">Foro de experiencias pedagógicas</h3>
         <p class="mx-5" style="align: justify;">¡Bienvenido al fascinante mundo de los libros regionales de Colombia! Este espacio está diseñado para que profesores como tú compartan sus conocimientos y experiencias sobre la riqueza literaria de nuestras diferentes regiones.</p>
-        <form action="{{ route('experiences.store') }}" method="POST">
-            @csrf
-            <textarea class="form-control" placeholder=" ¡Exprésate y déjanos tu sabiduría en este foro de palabras que enriquecerá nuestras aulas y mentes con historias colombianas inolvidables!" style=" max-width: 70%; margin-left:5%; border: 2px solid blue;" name="content" id="content" rows="4"></textarea>
-            <button class="btn btn-warning m-5" type="submit">Comentar</button>
-        </form>
     </div>
 
 
@@ -24,7 +16,7 @@
     <div class="card mt-2" style="max-width: 80%" >
         <div class="card-header p-0 position-relative mt-n4 mx-3 z-index-2">
           <div class="bg-gradient-warning shadow-primary border-radius-lg pt-4 pb-3">
-            <h6 class="text-white text-capitalize ps-3">{{ $experience->user->name }}</h6>
+            <h6 class="text-white text-capitalize ps-3">{{ $experience->user->name }} · {{ $experience->book->name }}</h6>
             <p class="mb-0 text-white ps-3">
             </p>
           </div>
@@ -40,6 +32,7 @@
                   <i class="material-icons text-2xl">face</i>
                   <input  style="margin:5px " type="submit" width="100%" class="btn btn-danger" value="Eliminar">
               </form>
+              <a href="{{ route('experiences.edit', $experience) }}" class="btn btn-outline-secondary" style="margin:5px">Editar</a>
           </div>
       @endif
         </div>
@@ -49,3 +42,4 @@
 
     @endforeach
 </div>
+@endsection

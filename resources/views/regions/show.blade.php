@@ -284,7 +284,7 @@
                         <img class="social-icon" src="https://crazybooks.com.co/img/diamante.png" alt="Icono de diamante">
                         </a>
 
-                        <a class="btn btn-dark btn-social mx-4 flex-grow-1" href="{{ route('evidences.show', ['id' => $book->id]) }}" aria-label="Ir a crear evidencia para {{$book->name}}">
+                        <a class="btn btn-dark btn-social mx-4 flex-grow-1" href="{{ route('evidences.show', $book->id) }}" aria-label="Ir a crear evidencia para {{$book->name}}">
                         <img class="social-icon" src="https://crazybooks.com.co/img/estrella.png" alt="Icono de estrella">
                         </a>
                         

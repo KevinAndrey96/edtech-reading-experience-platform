@@ -12,8 +12,6 @@ class UserController extends Controller
 {
     /**
      * Display a listing of system users.
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -24,8 +22,6 @@ class UserController extends Controller
 
     /**
      * Show the form for creating a new user.
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -34,9 +30,6 @@ class UserController extends Controller
 
     /**
      * Store a newly created user in storage.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
@@ -59,9 +52,6 @@ class UserController extends Controller
 
     /**
      * Display the specified user.
-     *
-     * @param User $user
-     * @return View
      */
     public function show(User $user): View
     {
@@ -72,9 +62,6 @@ class UserController extends Controller
 
     /**
      * Show the form for editing the specified user.
-     *
-     * @param User $user
-     * @return View
      */
     public function edit(User $user): View
     {
@@ -83,16 +70,12 @@ class UserController extends Controller
 
     /**
      * Update the specified user in storage.
-     *
-     * @param Request $request
-     * @param User $user
-     * @return RedirectResponse
      */
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+            'email' => 'required|string|email|max:255|unique:users,email,'.$user->id,
             'role' => 'required|string|in:admin,teacher,student,coordinator',
             'password' => 'nullable|string|min:6',
         ]);
@@ -101,7 +84,7 @@ class UserController extends Controller
         $user->email = $validated['email'];
         $user->role = $validated['role'];
 
-        if (!empty($validated['password'])) {
+        if (! empty($validated['password'])) {
             $user->password = Hash::make($validated['password']);
         }
 
@@ -112,9 +95,6 @@ class UserController extends Controller
 
     /**
      * Remove the specified user from storage.
-     *
-     * @param User $user
-     * @return RedirectResponse
      */
     public function destroy(User $user): RedirectResponse
     {

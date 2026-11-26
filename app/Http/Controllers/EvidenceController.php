@@ -7,6 +7,7 @@ use App\Models\Evidence;
 use App\Models\Region;
 use App\Models\User;
 use App\Services\MediaUploadService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +15,8 @@ use Illuminate\View\View;
 
 class EvidenceController extends Controller
 {
+    private const ATTACHMENT_RULE = 'nullable|file|mimes:jpg,jpeg,png,webp,gif,pdf,mp3,mp4|max:10240';
+
     protected MediaUploadService $mediaUploadService;
 
     public function __construct(MediaUploadService $mediaUploadService)
@@ -23,25 +26,21 @@ class EvidenceController extends Controller
 
     /**
      * Display a listing of student learning evidences.
-     *
-     * @return View
      */
     public function index(): View
     {
-        $evidences = Evidence::with(['user', 'book'])->latest()->get();
+        $books = Book::orderBy('name')->get();
 
-        return view('evidences.index', compact('evidences'));
+        return view('evidences.index', compact('books'));
     }
 
     /**
      * Show the form for creating a new evidence.
-     *
-     * @return View
      */
     public function create(): View
     {
         $books = Book::orderBy('name')->get();
-        $users = User::all();
+        $users = $this->assignableUsers();
         $evidences = Evidence::latest()->get();
 
         return view('evidences.create', compact('evidences', 'users', 'books'));
@@ -49,9 +48,6 @@ class EvidenceController extends Controller
 
     /**
      * Store a newly created evidence in storage.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
@@ -60,11 +56,13 @@ class EvidenceController extends Controller
             'class_room' => 'required|string|max:255',
             'user_id' => 'nullable|exists:users,id',
             'book_id' => 'nullable|exists:books,id',
-            'attachment_media' => 'nullable|file|max:10240',
+            'attachment_media' => self::ATTACHMENT_RULE,
         ]);
 
-        $evidence = new Evidence();
-        $evidence->user_id = (int) ($request->input('user_id') ?: Auth::id());
+        $evidence = new Evidence;
+        $evidence->user_id = Auth::user()->isAdmin() && $request->filled('user_id')
+            ? (int) $request->input('user_id')
+            : (int) Auth::id();
         $evidence->book_id = $request->filled('book_id') ? (int) $request->input('book_id') : null;
         $evidence->student_name = $request->input('student_name');
         $evidence->class_room = $request->input('class_room');
@@ -80,20 +78,16 @@ class EvidenceController extends Controller
             $evidence->save();
         }
 
-        return redirect()->route('evidences.index')->with('success', 'Evidencia pedagógica registrada exitosamente.');
+        return back()->with('success', 'Evidencia pedagógica registrada exitosamente.');
     }
 
     /**
      * Display evidences for a specific book.
-     *
-     * @param int|string $id
-     * @return View
      */
     public function show(int|string $id): View
     {
         $book = Book::findOrFail($id);
-        $users = User::all();
-        $books = Book::all();
+        $users = $this->assignableUsers();
         $evidences = Evidence::where('book_id', $id)->with(['user', 'book'])->get();
 
         return view('evidences.show', compact('book', 'users', 'evidences', 'id'));
@@ -101,24 +95,17 @@ class EvidenceController extends Controller
 
     /**
      * Filter evidences by geographical region.
-     *
-     * @param int|string $regionID
-     * @return View
      */
     public function evidencesByRegionID(int|string $regionID): View
     {
         $region = Region::findOrFail($regionID);
-        $bookIds = Book::where('region_id', $regionID)->pluck('id');
-        $evidences = Evidence::whereIn('book_id', $bookIds)->with(['user', 'book'])->get();
+        $books = $region->books()->orderBy('name')->get();
 
-        return view('evidences.index', compact('evidences', 'region'));
+        return view('evidences.index', compact('books', 'region'));
     }
 
     /**
      * Filter evidences by specific book for the authenticated user.
-     *
-     * @param int|string $bookID
-     * @return View
      */
     public function evidencesByBookID(int|string $bookID): View
     {
@@ -133,9 +120,6 @@ class EvidenceController extends Controller
 
     /**
      * Show the form for editing the specified evidence.
-     *
-     * @param Evidence $evidence
-     * @return View
      */
     public function edit(Evidence $evidence): View
     {
@@ -147,10 +131,6 @@ class EvidenceController extends Controller
 
     /**
      * Update the specified evidence in storage.
-     *
-     * @param Request $request
-     * @param Evidence $evidence
-     * @return RedirectResponse
      */
     public function update(Request $request, Evidence $evidence): RedirectResponse
     {
@@ -159,7 +139,7 @@ class EvidenceController extends Controller
             'class_room' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id',
             'book_id' => 'nullable|exists:books,id',
-            'attachment_media' => 'nullable|file|max:10240',
+            'attachment_media' => self::ATTACHMENT_RULE,
         ]);
 
         $evidence->user_id = (int) $request->input('user_id');
@@ -184,14 +164,19 @@ class EvidenceController extends Controller
 
     /**
      * Remove the specified evidence from storage.
-     *
-     * @param Evidence $evidence
-     * @return RedirectResponse
      */
     public function destroy(Evidence $evidence): RedirectResponse
     {
         $evidence->delete();
 
         return redirect()->route('evidences.index')->with('success', 'Evidencia eliminada exitosamente.');
+    }
+
+    /**
+     * Administrators may attribute an evidence to any teacher; teachers only to themselves.
+     */
+    private function assignableUsers(): Collection
+    {
+        return Auth::user()->isAdmin() ? User::orderBy('name')->get() : User::whereKey(Auth::id())->get();
     }
 }

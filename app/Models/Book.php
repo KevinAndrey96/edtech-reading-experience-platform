@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 /**
  * Class Book
  *
- * @package App\Models
  * @property int $id
  * @property int $region_id
  * @property string|null $front_page
@@ -64,9 +63,14 @@ class Book extends Model
     ];
 
     /**
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'region_id' => 'integer',
+    ];
+
+    /**
      * Region associated with this book.
-     *
-     * @return BelongsTo
      */
     public function region(): BelongsTo
     {
@@ -75,8 +79,6 @@ class Book extends Model
 
     /**
      * Pedagogical experiences created for this book.
-     *
-     * @return HasMany
      */
     public function experiences(): HasMany
     {
@@ -85,8 +87,6 @@ class Book extends Model
 
     /**
      * Student learning evidences associated with this book.
-     *
-     * @return HasMany
      */
     public function evidences(): HasMany
     {

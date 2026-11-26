@@ -12,8 +12,6 @@ class RegionController extends Controller
 {
     /**
      * Display a listing of geographical and cultural regions.
-     *
-     * @return View
      */
     public function index(): View
     {
@@ -25,8 +23,6 @@ class RegionController extends Controller
 
     /**
      * Show the form for creating a new region.
-     *
-     * @return View
      */
     public function create(): View
     {
@@ -37,9 +33,6 @@ class RegionController extends Controller
 
     /**
      * Store a newly created region in storage.
-     *
-     * @param Request $request
-     * @return RedirectResponse
      */
     public function store(Request $request): RedirectResponse
     {
@@ -55,9 +48,6 @@ class RegionController extends Controller
 
     /**
      * Display the specified region and its associated books.
-     *
-     * @param int|string $regionID
-     * @return View
      */
     public function show(int|string $regionID): View
     {
@@ -69,9 +59,6 @@ class RegionController extends Controller
 
     /**
      * Show the form for editing the specified region.
-     *
-     * @param Region $region
-     * @return View
      */
     public function edit(Region $region): View
     {
@@ -80,10 +67,6 @@ class RegionController extends Controller
 
     /**
      * Update the specified region in storage.
-     *
-     * @param Request $request
-     * @param Region $region
-     * @return RedirectResponse
      */
     public function update(Request $request, Region $region): RedirectResponse
     {
@@ -99,9 +82,6 @@ class RegionController extends Controller
 
     /**
      * Remove the specified region from storage.
-     *
-     * @param Region $region
-     * @return RedirectResponse
      */
     public function destroy(Region $region): RedirectResponse
     {
